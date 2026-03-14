@@ -7,9 +7,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
+    // Use the Supabase direct connection URL (port 5432) here — not the pooler.
+    // Prisma CLI (migrate/db push) needs a direct connection, not a pooler.
+    // Set DATABASE_URL in .env / Vercel env vars.
     url: process.env["DATABASE_URL"]!,
-    // directUrl for migrations (bypasses connection pooler like PgBouncer)
-    // Uncomment and set DIRECT_URL if using Supabase or similar:
-    // directUrl: process.env["DIRECT_URL"]!,
   },
 });

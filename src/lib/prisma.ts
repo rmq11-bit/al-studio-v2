@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-// ── Specialties: SQLite stores as JSON string, we expose it as string[] ────────
+// ── Specialties: stored as a JSON string in DB, exposed as string[] ────────────
 // All reads go through the result extension below (transparent to callers).
 // All writes must pass JSON.stringify(array) — only 2 sites in this project.
 
@@ -15,10 +15,13 @@ function parseSpecialties(raw: unknown): string[] {
 
 // ── Client factory ─────────────────────────────────────────────────────────────
 function createPrismaClient() {
-  const url = process.env.DATABASE_URL
-  if (!url) throw new Error('DATABASE_URL is not set')
+  // Use DATABASE_URL at runtime; fall back to a placeholder so the client
+  // can be *created* at module-import time (build-time) without throwing.
+  // The placeholder will fail on first actual query — that's the right behaviour.
+  const connectionString = process.env.DATABASE_URL ?? 'postgresql://localhost/placeholder'
 
-  const adapter = new PrismaLibSql({ url })
+  // Pass PoolConfig directly — avoids type conflicts with peer pg versions
+  const adapter = new PrismaPg({ connectionString })
 
   return new PrismaClient({
     adapter,

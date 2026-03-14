@@ -54,12 +54,12 @@ async function PhotographerList({
   // In-memory filters (name search + specialty)
   if (searchParams.q) {
     const lower = searchParams.q.toLowerCase()
-    photographers = photographers.filter((p) =>
+    photographers = photographers.filter((p: any) =>
       p.user.name.toLowerCase().includes(lower)
     )
   }
   if (searchParams.specialty) {
-    photographers = photographers.filter((p) =>
+    photographers = photographers.filter((p: any) =>
       (p.specialties as unknown as string[]).includes(searchParams.specialty!)
     )
   }

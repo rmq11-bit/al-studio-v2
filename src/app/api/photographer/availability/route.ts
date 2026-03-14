@@ -24,7 +24,7 @@ export async function GET() {
       orderBy: { date: 'asc' },
     })
 
-    return NextResponse.json(unavailable.map((d) => d.date))
+    return NextResponse.json(unavailable.map((d: any) => d.date))
   } catch (err) {
     console.error('[GET /api/photographer/availability]', err)
     return NextResponse.json({ error: 'خطأ في الخادم' }, { status: 500 })

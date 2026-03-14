@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import { UserRole } from '@prisma/client'
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +34,7 @@ export async function POST(req: Request) {
         email,
         phone: phone?.trim() || null,
         passwordHash,
-        role: role as UserRole,
+        role,
         // If photographer, also create a blank profile
         photographerProfile:
           role === 'PHOTOGRAPHER'

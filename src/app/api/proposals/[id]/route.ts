@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -58,7 +57,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
     if (status === 'ACCEPTED') {
       // Transaction: accept this proposal, reject others, close project, open conversation
-      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await prisma.$transaction(async (tx: any) => {
         // 1. Accept this proposal
         await tx.proposal.update({ where: { id }, data: { status: 'ACCEPTED' } })
 

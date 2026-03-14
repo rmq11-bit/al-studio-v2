@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // URL is set via DATABASE_URL env var in prisma.config.ts
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  PHOTOGRAPHER
+  CONSUMER
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+enum ProjectStatus {
+  OPEN
+  CLOSED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ConversationType {
+  BOOKING
+  PROPOSAL
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  role         UserRole
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  bio          String?
+  phone        String?
+  isBanned     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  photographerProfile   PhotographerProfile?
+  bookingsAsConsumer    Booking[]            @relation("ConsumerBookings")
+  projectPosts          ProjectPost[]
+  sentMessages          Message[]
+  consumerConversations Conversation[]       @relation("ConsumerConversations")
+  reviews               Review[]             @relation("ConsumerReviews")
+}
+
+model PhotographerProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  hourlyRate     Float    @default(0)
+  /// Stored as a JSON array string e.g. '["wedding","portrait"]'
+  specialties    String   @default("[]")
+  location       String?
+  bio            String?
+  isPro          Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  /// Higher value = higher in browse results (for future PRO boost)
+  searchPriority Int      @default(0)
+  /// Verified badge — shown on profile and card
+  verifiedBadge  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media            Media[]
+  unavailableDates UnavailableDate[]
+  bookings         Booking[]         @relation("PhotographerBookings")
+  proposals        Proposal[]
+  conversations    Conversation[]    @relation("PhotographerConversations")
+  reviews          Review[]
+}
+
+model Media {
+  id             String   @id @default(cuid())
+  photographerId String
+  type           String
+  url            String
+  caption        String?
+  createdAt      DateTime @default(now())
+
+  photographer PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+}
+
+/// Only BLOCKED dates are stored — all other dates are implicitly available.
+model UnavailableDate {
+  id             String @id @default(cuid())
+  photographerId String
+  date           String // YYYY-MM-DD
+
+  photographer PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+
+  @@unique([photographerId, date])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  consumerId     String
+  photographerId String
+  date           String        // YYYY-MM-DD
+  hours          Float
+  notes          String?
+  status         BookingStatus @default(PENDING)
+  rejectionNote  String?
+  createdAt      DateTime      @default(now())
+
+  consumer     User                @relation("ConsumerBookings", fields: [consumerId], references: [id])
+  photographer PhotographerProfile @relation("PhotographerBookings", fields: [photographerId], references: [id])
+  conversation Conversation?
+  review       Review?
+}
+
+model Review {
+  id             String   @id @default(cuid())
+  bookingId      String   @unique  // one review per booking
+  consumerId     String
+  photographerId String
+  rating         Int      // 1–5
+  comment        String?
+  createdAt      DateTime @default(now())
+
+  booking      Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  consumer     User                @relation("ConsumerReviews", fields: [consumerId], references: [id])
+  photographer PhotographerProfile @relation(fields: [photographerId], references: [id])
+
+  @@index([photographerId])
+}
+
+model ProjectPost {
+  id          String        @id @default(cuid())
+  consumerId  String
+  title       String
+  description String
+  hours       Float
+  budget      Float?
+  status      ProjectStatus @default(OPEN)
+  createdAt   DateTime      @default(now())
+
+  consumer  User       @relation(fields: [consumerId], references: [id])
+  proposals Proposal[]
+}
+
+model Proposal {
+  id             String         @id @default(cuid())
+  projectId      String
+  photographerId String
+  price          Float
+  message        String?
+  status         ProposalStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+
+  project      ProjectPost         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  photographer PhotographerProfile @relation(fields: [photographerId], references: [id])
+  conversation Conversation?
+
+  @@unique([projectId, photographerId])
+}
+
+model Conversation {
+  id             String           @id @default(cuid())
+  type           ConversationType
+  consumerId     String
+  photographerId String
+  bookingId      String?          @unique
+  proposalId     String?          @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  consumer     User                @relation("ConsumerConversations", fields: [consumerId], references: [id])
+  photographer PhotographerProfile @relation("PhotographerConversations", fields: [photographerId], references: [id])
+  booking      Booking?            @relation(fields: [bookingId], references: [id])
+  proposal     Proposal?           @relation(fields: [proposalId], references: [id])
+  messages     Message[]
+
+  @@index([consumerId])
+  @@index([photographerId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  createdAt      DateTime  @default(now())
+  readAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+}

@@ -48,8 +48,11 @@ model User {
   avatarUrl    String?
   bio          String?
   phone        String?
-  isBanned     Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  isBanned                    Boolean   @default(false)
+  emailVerified               Boolean   @default(false)
+  emailVerificationToken      String?
+  emailVerificationExpiresAt  DateTime?
+  createdAt                   DateTime  @default(now())
 
   photographerProfile   PhotographerProfile?
   bookingsAsConsumer    Booking[]            @relation("ConsumerBookings")

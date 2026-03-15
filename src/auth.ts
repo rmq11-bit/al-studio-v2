@@ -21,8 +21,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: credentials.email as string },
         })
 
-        // Reject banned users at login time
+        // Reject banned or non-existent users at login time
         if (!user || user.isBanned) return null
+
+        // Reject users who haven't verified their email yet
+        if (!user.emailVerified) return null
 
         const valid = await compare(credentials.password as string, user.passwordHash)
         if (!valid) return null
@@ -42,8 +45,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         // Initial sign-in: copy all custom fields into the token
-        token.id       = user.id
-        token.role     = (user as { role: string }).role
+        token.id        = user.id
+        token.role      = (user as { role: string }).role
         token.avatarUrl = (user as { avatarUrl?: string }).avatarUrl
         token.isBanned  = (user as { isBanned: boolean }).isBanned
       }

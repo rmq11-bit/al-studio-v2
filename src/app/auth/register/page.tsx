@@ -1,16 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Camera, Mail, Lock, User, Phone, AlertCircle, UserPlus } from 'lucide-react'
 
 export default function RegisterPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
+  const router = useRouter()
+  const [name, setName]       = useState('')
+  const [email, setEmail]     = useState('')
+  const [phone, setPhone]     = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<'PHOTOGRAPHER' | 'CONSUMER'>('CONSUMER')
-  const [error, setError] = useState('')
+  const [role, setRole]       = useState<'PHOTOGRAPHER' | 'CONSUMER'>('CONSUMER')
+  const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -19,37 +21,28 @@ export default function RegisterPage() {
     setLoading(true)
 
     const res = await fetch('/api/auth/register', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, phone: phone.trim() || null, password, role }),
+      body:    JSON.stringify({ name, email, phone: phone.trim() || null, password, role }),
     })
 
     const data = await res.json()
+    setLoading(false)
 
     if (!res.ok) {
       setError(data.error ?? 'حدث خطأ أثناء التسجيل')
-      setLoading(false)
       return
     }
 
-    // Sign in immediately after registration
-    const { signIn } = await import('next-auth/react')
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
-
-    setLoading(false)
-
-    if (!result?.ok) {
-      // Registration succeeded but sign-in failed — send to login
-      window.location.href = '/auth/login'
+    // Registration succeeded (201) or unverified account re-sent OTP (200)
+    // Either way, redirect to verify-email page
+    if (data.requiresVerification) {
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
       return
     }
 
-    // ✅ Hard navigation after registration — same reason as login
-    window.location.href = '/auth/redirect'
+    // Fallback: go to login
+    router.push('/auth/login')
   }
 
   return (

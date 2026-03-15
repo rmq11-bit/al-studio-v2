@@ -6,9 +6,10 @@ export default auth((req) => {
   const session = req.auth
 
   // ── Public routes — no auth required ─────────────────────────────────────
-  const publicPaths = ['/', '/browse', '/auth/login', '/auth/register']
+  const publicPaths = ['/', '/browse', '/auth/login', '/auth/register', '/auth/verify-email']
   const isPublic =
     publicPaths.includes(pathname) ||
+    pathname.startsWith('/auth/verify-email') ||
     pathname.startsWith('/photographer/') ||
     pathname.startsWith('/projects')
 

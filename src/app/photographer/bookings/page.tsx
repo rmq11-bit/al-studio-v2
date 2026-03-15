@@ -5,6 +5,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import BookingActions from '@/components/BookingActions'
+import CompleteBookingButton from '@/components/CompleteBookingButton'
 import { CalendarDays, ArrowRight, Mail, Phone, MessageSquare } from 'lucide-react'
 
 const STATUS_MAP = {
@@ -173,6 +174,13 @@ export default async function PhotographerBookingsPage() {
 
                     {/* Accept / Reject — PENDING only */}
                     {b.status === 'PENDING' && <BookingActions bookingId={b.id} />}
+
+                    {/* Mark as complete — ACCEPTED only */}
+                    {b.status === 'ACCEPTED' && (
+                      <div className="mt-3 pt-3 border-t border-green-100">
+                        <CompleteBookingButton bookingId={b.id} />
+                      </div>
+                    )}
                   </div>
                 )
               })}

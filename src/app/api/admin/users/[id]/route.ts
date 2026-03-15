@@ -6,7 +6,9 @@ interface Params {
   params: Promise<{ id: string }>
 }
 
-/** PATCH /api/admin/users/[id] — ban or unban a user */
+const VALID_ROLES = ['ADMIN', 'PHOTOGRAPHER', 'CONSUMER'] as const
+
+/** PATCH /api/admin/users/[id] — ban/unban OR change role */
 export async function PATCH(req: Request, { params }: Params) {
   try {
     const { id } = await params
@@ -15,17 +17,36 @@ export async function PATCH(req: Request, { params }: Params) {
       return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
     }
 
-    // Prevent admin from banning themselves
+    // Prevent admin from modifying their own account via this endpoint
     if (id === session.user.id) {
-      return NextResponse.json({ error: 'لا يمكن حظر حسابك الخاص' }, { status: 400 })
+      return NextResponse.json({ error: 'لا يمكن تعديل حسابك الخاص من هنا' }, { status: 400 })
     }
 
-    const { isBanned } = await req.json()
+    const body = await req.json()
+    const { isBanned, role } = body
+
+    // Build the update payload — only include provided fields
+    const data: Record<string, unknown> = {}
+
+    if (isBanned !== undefined) {
+      data.isBanned = Boolean(isBanned)
+    }
+
+    if (role !== undefined) {
+      if (!VALID_ROLES.includes(role)) {
+        return NextResponse.json({ error: 'دور غير صحيح' }, { status: 400 })
+      }
+      data.role = role
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'لا توجد بيانات للتحديث' }, { status: 400 })
+    }
 
     const updated = await prisma.user.update({
       where: { id },
-      data: { isBanned: Boolean(isBanned) },
-      select: { id: true, isBanned: true },
+      data,
+      select: { id: true, isBanned: true, role: true },
     })
 
     return NextResponse.json(updated)
@@ -36,7 +57,7 @@ export async function PATCH(req: Request, { params }: Params) {
 }
 
 /** DELETE /api/admin/users/[id] — permanently delete a user */
-export async function DELETE(req: Request, { params }: Params) {
+export async function DELETE(_req: Request, { params }: Params) {
   try {
     const { id } = await params
     const session = await auth()
@@ -48,9 +69,7 @@ export async function DELETE(req: Request, { params }: Params) {
       return NextResponse.json({ error: 'لا يمكن حذف حسابك الخاص' }, { status: 400 })
     }
 
-    // Cascade deletes are set in the schema (onDelete: Cascade)
     await prisma.user.delete({ where: { id } })
-
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('[DELETE /api/admin/users/:id]', err)

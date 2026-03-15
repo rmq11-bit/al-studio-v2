@@ -5,6 +5,8 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import ReviewButton from '@/components/ReviewButton'
+import CompleteBookingButton from '@/components/CompleteBookingButton'
+import CancelBookingButton from '@/components/CancelBookingButton'
 import { Search, CalendarDays, FolderOpen, Plus, ArrowLeft } from 'lucide-react'
 
 const STATUS_MAP = {
@@ -149,6 +151,17 @@ export default async function ConsumerDashboardPage() {
                         )}
                       </div>
 
+                      {/* Action row */}
+                      {b.status === 'ACCEPTED' && (
+                        <div className="mt-2 pr-13">
+                          <CompleteBookingButton bookingId={b.id} />
+                        </div>
+                      )}
+                      {b.status === 'PENDING' && (
+                        <div className="mt-2 pr-13">
+                          <CancelBookingButton bookingId={b.id} />
+                        </div>
+                      )}
                       {/* Review row — only for COMPLETED bookings */}
                       {b.status === 'COMPLETED' && (
                         <div className="mt-2 pr-13">

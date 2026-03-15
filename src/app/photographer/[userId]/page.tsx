@@ -7,6 +7,7 @@ import BookingForm from '@/components/BookingForm'
 import RatingStars from '@/components/RatingStars'
 import { MapPin, Clock, Star, ImageIcon, CheckCircle, BadgeCheck } from 'lucide-react'
 import { SPECIALTY_LABELS } from '@/lib/specialties'
+import GalleryViewer from '@/components/GalleryViewer'
 
 interface PageProps {
   params: Promise<{ userId: string }>
@@ -167,24 +168,7 @@ export default async function PhotographerProfilePage({ params }: PageProps) {
                   </span>
                 </div>
 
-                {photographer.media.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-300">
-                    <ImageIcon className="w-12 h-12 mb-3" />
-                    <p className="text-sm">لا توجد صور في المعرض بعد</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {photographer.media.map((m) => (
-                      <div key={m.id} className="aspect-square rounded-xl overflow-hidden group/img">
-                        <img
-                          src={m.url}
-                          alt={m.caption ?? 'صورة'}
-                          className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <GalleryViewer media={photographer.media} />
               </div>
 
               {/* ── Reviews section ── */}

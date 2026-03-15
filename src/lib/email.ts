@@ -11,7 +11,7 @@ function getResend(): Resend {
   return _resend
 }
 
-const FROM_ADDRESS = 'onboarding@resend.dev'
+const FROM_ADDRESS = 'Studio <noreply@mail.studio-ksa.com>'
 
 /** Generate a cryptographically random 6-digit OTP */
 export function generateOTP(): string {

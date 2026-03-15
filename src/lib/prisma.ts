@@ -18,7 +18,7 @@ function createPrismaClient() {
   // Use DATABASE_URL at runtime; fall back to a placeholder so the client
   // can be *created* at module-import time (build-time) without throwing.
   // The placeholder will fail on first actual query — that's the right behaviour.
-  const connectionString = process.env.DATABASE_URL ?? 'postgresql://localhost/placeholder'
+  const connectionString = process.env.DATABASE_URL || 'postgresql://localhost/placeholder'
 
   // Pass PoolConfig directly — avoids type conflicts with peer pg versions
   const adapter = new PrismaPg({ connectionString })

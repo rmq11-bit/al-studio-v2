@@ -5,7 +5,8 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ProposalForm from '@/components/ProposalForm'
 import ProposalActions from '@/components/ProposalActions'
-import { Clock, Banknote, Calendar, Users, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Clock, Banknote, Calendar, Users, CheckCircle, MessageSquare } from 'lucide-react'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -25,6 +26,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               user: { select: { name: true, avatarUrl: true } },
             },
           },
+          conversation: { select: { id: true } },
         },
         orderBy: { createdAt: 'asc' },
       },
@@ -187,9 +189,20 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         )}
 
                         {proposal.status === 'ACCEPTED' && (
-                          <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600">
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            تم قبول هذا العرض
+                          <div className="mt-2 flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 text-xs text-green-600">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              تم قبول هذا العرض
+                            </div>
+                            {proposal.conversation?.id && (
+                              <Link
+                                href={`/messages/${proposal.conversation.id}`}
+                                className="flex items-center gap-1 text-xs text-[#C0A4A3] hover:text-[#A88887] font-semibold transition-colors"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                فتح المحادثة
+                              </Link>
+                            )}
                           </div>
                         )}
                       </div>

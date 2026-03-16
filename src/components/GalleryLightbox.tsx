@@ -4,7 +4,7 @@ import { useEffect, useCallback } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {
-  images: { url: string; caption: string | null }[]
+  images: { url: string; caption: string | null; type: string }[]
   currentIndex: number
   onClose: () => void
   onPrev: () => void
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function GalleryLightbox({ images, currentIndex, onClose, onPrev, onNext }: Props) {
-  const image = images[currentIndex]
+  const item = images[currentIndex]
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -32,7 +32,7 @@ export default function GalleryLightbox({ images, currentIndex, onClose, onPrev,
     }
   }, [handleKeyDown])
 
-  if (!image) return null
+  if (!item) return null
 
   return (
     <div
@@ -77,18 +77,29 @@ export default function GalleryLightbox({ images, currentIndex, onClose, onPrev,
         </button>
       )}
 
-      {/* Main image — stopPropagation so clicking image doesn't close */}
-      <img
-        src={image.url}
-        alt={image.caption ?? 'صورة'}
-        className="max-h-[90vh] max-w-[88vw] object-contain rounded-xl shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {/* Main content — image or video */}
+      {item.type === 'video' ? (
+        <video
+          key={item.url}
+          src={item.url}
+          controls
+          autoPlay
+          className="max-h-[90vh] max-w-[88vw] rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <img
+          src={item.url}
+          alt={item.caption ?? 'صورة'}
+          className="max-h-[90vh] max-w-[88vw] object-contain rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
 
       {/* Caption */}
-      {image.caption && (
+      {item.caption && (
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-2 rounded-full backdrop-blur-sm text-center max-w-xs pointer-events-none">
-          {image.caption}
+          {item.caption}
         </div>
       )}
     </div>

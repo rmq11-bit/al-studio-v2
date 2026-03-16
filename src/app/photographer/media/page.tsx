@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import { Images, Upload, Trash2, Loader2, AlertCircle, X, CheckCircle } from 'lucide-react'
+import { Images, Upload, Trash2, Loader2, AlertCircle, X, CheckCircle, Play } from 'lucide-react'
 
 interface MediaItem {
   id: string
@@ -27,6 +27,9 @@ export default function MediaManagementPage() {
   const [success, setSuccess] = useState('')
   const [preview, setPreview] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  // Derived — avoids storing duplicate state
+  const isVideoFile = selectedFile?.type.startsWith('video/') ?? false
 
   useEffect(() => {
     if (status === 'authenticated' && session.user.role !== 'PHOTOGRAPHER') {
@@ -78,7 +81,7 @@ export default function MediaManagementPage() {
     }
 
     setMedia((prev) => [data, ...prev])
-    setSuccess('تم رفع الصورة بنجاح')
+    setSuccess('تم رفع الملف بنجاح')
     clearSelection()
     setTimeout(() => setSuccess(''), 3000)
   }
@@ -90,7 +93,7 @@ export default function MediaManagementPage() {
     if (res.ok) {
       setMedia((prev) => prev.filter((m) => m.id !== id))
     } else {
-      setError('فشل حذف الصورة')
+      setError('فشل حذف الملف')
     }
   }
 
@@ -120,7 +123,7 @@ export default function MediaManagementPage() {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
             <h2 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
               <Upload className="w-4 h-4 text-[#C0A4A3]" />
-              رفع صورة جديدة
+              رفع صورة أو فيديو
             </h2>
 
             {error && (
@@ -137,25 +140,34 @@ export default function MediaManagementPage() {
             {!preview ? (
               <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-10 cursor-pointer hover:border-[#C0A4A3]/50 hover:bg-[#C0A4A3]/5 transition-all">
                 <Upload className="w-10 h-10 text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500 font-medium">اضغط لاختيار صورة</p>
-                <p className="text-xs text-gray-400 mt-1">JPG، PNG، WEBP — حتى 10MB</p>
+                <p className="text-sm text-gray-500 font-medium">اضغط لاختيار صورة أو فيديو</p>
+                <p className="text-xs text-gray-400 mt-1">صور: JPG، PNG، WEBP حتى 10MB · فيديو: MP4، WEBM، MOV حتى 100MB</p>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
                   className="hidden"
                   onChange={handleFileChange}
                 />
               </label>
             ) : (
               <div className="flex flex-col sm:flex-row gap-4 items-start">
-                {/* Preview */}
+                {/* Preview — image or video */}
                 <div className="relative shrink-0">
-                  <img
-                    src={preview}
-                    alt="معاينة"
-                    className="w-40 h-40 object-cover rounded-xl border border-gray-100"
-                  />
+                  {isVideoFile ? (
+                    <video
+                      src={preview}
+                      className="w-40 h-40 object-cover rounded-xl border border-gray-100"
+                      preload="metadata"
+                      muted
+                    />
+                  ) : (
+                    <img
+                      src={preview}
+                      alt="معاينة"
+                      className="w-40 h-40 object-cover rounded-xl border border-gray-100"
+                    />
+                  )}
                   <button
                     onClick={clearSelection}
                     className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full shadow border border-gray-200 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors"
@@ -168,7 +180,7 @@ export default function MediaManagementPage() {
                 <div className="flex-1 space-y-3">
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      وصف الصورة (اختياري)
+                      وصف الملف (اختياري)
                     </label>
                     <input
                       type="text"
@@ -184,7 +196,7 @@ export default function MediaManagementPage() {
                     className="flex items-center gap-2 bg-[#C0A4A3] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#A88887] transition-colors disabled:opacity-60"
                   >
                     {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    {uploading ? 'جاري الرفع...' : 'رفع الصورة'}
+                    {uploading ? 'جاري الرفع...' : 'رفع الملف'}
                   </button>
                 </div>
               </div>
@@ -195,17 +207,34 @@ export default function MediaManagementPage() {
           {media.length === 0 ? (
             <div className="text-center py-16 text-gray-300">
               <Images className="w-16 h-16 mx-auto mb-3" />
-              <p className="text-sm">لا توجد صور بعد — ارفع أول صورة</p>
+              <p className="text-sm">لا توجد ملفات بعد — ارفع أول ملف</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {media.map((item) => (
                 <div key={item.id} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100">
-                  <img
-                    src={item.url}
-                    alt={item.caption ?? 'صورة'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  {item.type === 'video' ? (
+                    <>
+                      <video
+                        src={item.url}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        preload="metadata"
+                        muted
+                      />
+                      {/* Play icon badge so it's obvious it's a video */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-black/40 rounded-full p-2">
+                          <Play className="w-5 h-5 text-white fill-white" />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={item.caption ?? 'صورة'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
                   {/* Overlay on hover */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button

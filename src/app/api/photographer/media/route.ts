@@ -41,12 +41,18 @@ export async function POST(req: Request) {
 
     if (!file) return NextResponse.json({ error: 'لم يتم إرفاق ملف' }, { status: 400 })
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'نوع الملف غير مدعوم (jpg, png, webp, gif فقط)' }, { status: 400 })
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
+    const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type)
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !isVideo) {
+      return NextResponse.json(
+        { error: 'نوع الملف غير مدعوم (jpg, png, webp, gif, mp4, webm, mov فقط)' },
+        { status: 400 }
+      )
     }
 
-    const MAX_SIZE_MB = 10
+    const MAX_SIZE_MB = isVideo ? 100 : 10
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
       return NextResponse.json({ error: `حجم الملف يتجاوز ${MAX_SIZE_MB}MB` }, { status: 400 })
     }
@@ -58,7 +64,7 @@ export async function POST(req: Request) {
     const media = await prisma.media.create({
       data: {
         photographerId: profile.id,
-        type: 'image',
+        type: isVideo ? 'video' : 'image',
         url: blob.url,
         caption,
       },

@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { ImageIcon } from 'lucide-react'
+import { ImageIcon, Play } from 'lucide-react'
 import GalleryLightbox from './GalleryLightbox'
 
 interface MediaItem {
   id: string
   url: string
   caption: string | null
+  type: string
 }
 
 export default function GalleryViewer({ media }: { media: MediaItem[] }) {
@@ -37,14 +38,31 @@ export default function GalleryViewer({ media }: { media: MediaItem[] }) {
           <button
             key={m.id}
             onClick={() => setLightboxIndex(idx)}
-            className="aspect-square rounded-xl overflow-hidden group/img focus:outline-none focus:ring-2 focus:ring-[#C0A4A3]/50 cursor-zoom-in"
-            aria-label={m.caption ?? `صورة ${idx + 1}`}
+            className="aspect-square rounded-xl overflow-hidden group/img focus:outline-none focus:ring-2 focus:ring-[#C0A4A3]/50 cursor-zoom-in relative bg-gray-100"
+            aria-label={m.caption ?? (m.type === 'video' ? `فيديو ${idx + 1}` : `صورة ${idx + 1}`)}
           >
-            <img
-              src={m.url}
-              alt={m.caption ?? 'صورة'}
-              className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
-            />
+            {m.type === 'video' ? (
+              <>
+                <video
+                  src={m.url}
+                  className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
+                  preload="metadata"
+                  muted
+                />
+                {/* Play badge */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-black/40 rounded-full p-2.5">
+                    <Play className="w-5 h-5 text-white fill-white" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <img
+                src={m.url}
+                alt={m.caption ?? 'صورة'}
+                className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
+              />
+            )}
           </button>
         ))}
       </div>

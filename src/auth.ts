@@ -4,6 +4,11 @@ import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // trustHost: tell NextAuth to derive its base URL from the incoming Host
+  // header instead of NEXTAUTH_URL. This ensures auth stays on whatever
+  // domain the request arrived on (studio-ksa.com) even if the env var
+  // still points to the Vercel default domain.
+  trustHost: true,
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/auth/login',
